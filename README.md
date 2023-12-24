@@ -1,2 +1,7 @@
-# RedisClient
-Mini Redis Client with simple interfaces
+# MiniRedisClient
+Very simple and straightforward C++ client to access Redis. 
+In my opinion, most existing C++ wrappers are over engineering. 
+Providing wrapping for most common Redis commands, and also providing the raw interface to execute other commands not wrapped. 
+Depends on hiredis only. 
+TODO: Add subscriber.
+
