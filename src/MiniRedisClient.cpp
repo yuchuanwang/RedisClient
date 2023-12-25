@@ -346,7 +346,7 @@ std::string MiniRedisClient::ping(const std::string& msg) const
     int expectedType = REDIS_REPLY_STRING;
     if (msg.empty())
     {
-        // Empty ping command is specicial
+        // Empty ping command is special case
         // It uses REDIS_REPLY_STATUS, and the return value is saved in reply->str
         expectedType = REDIS_REPLY_STATUS; 
         reply = execute("PING");
@@ -437,7 +437,7 @@ bool MiniRedisClient::ttl(const std::string& key, long long int& replied) const
 
 bool MiniRedisClient::type(const std::string& key, std::string& replied) const
 {
-    // TODO: Why %b doesn't work? 
+    // TODO: Why %b doesn't work for this command? 
     //redisReply* reply = execute("TYPE %b %b", key.c_str(), key.size());
     redisReply* reply = execute("TYPE %s", key.c_str());
     return HandleStatusReply(reply, replied);
