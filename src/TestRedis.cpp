@@ -1,7 +1,8 @@
 #include <iostream>
 #include "MiniRedisClient.h"
+#include "MiniRedisPubSub.h"
 
-void TestMe()
+void TestClient()
 {
     std::string ans;
     MiniRedisClient client;
@@ -127,7 +128,51 @@ void TestMe()
     std::cout << repliedInt << std::endl; 
 }
 
+void SubscribeCb(const std::string& channel, const std::string& content)
+{
+    std::cout << "Subscriber CB receives channel: " << channel << ", data: " << content << std::endl; 
+}
+
+void TestSub()
+{
+    MiniRedisPubSub sub;
+    sub.SetSubscribeCb(SubscribeCb);
+    sub.Connect("127.0.0.1", 6379);
+    sub.Subscribe("testChannel1");
+    sub.Subscribe("testChannel2");
+
+    int interval = 60;
+    int i = 0;
+    while (i < interval)
+    {
+        sleep(1);
+        i++; 
+    }
+    
+    std::cout << "Subscribing done" << std::endl; 
+}
+
+void TestPub()
+{
+    MiniRedisPubSub pub;
+    pub.Connect("127.0.0.1", 6379);
+
+    int interval = 60;
+    int i = 0;
+    std::string content("Content from C++ client"); 
+    while (i < interval)
+    {
+        pub.Publish("channelFromCpp", content); 
+        sleep(1);
+        i++; 
+    }
+
+    std::cout << "Publishing done" << std::endl; 
+}
+
 int main()
 {
-    TestMe();
+    TestClient();
+    //TestPub();
+    TestSub();
 }
