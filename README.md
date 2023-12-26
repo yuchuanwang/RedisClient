@@ -1,4 +1,4 @@
-# MiniRedisClient
+# Mini Redis Client
 
 Very simple and straightforward C++ client to access Redis, and Redis publisher/subscriber. 
 
