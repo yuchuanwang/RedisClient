@@ -308,6 +308,10 @@ public:
     // Sorted Set related commands
     // ... ...
 
+    // https://redis.io/docs/manual/pipelining/
+    // Use pipeline to improve performance by batch operation
+    bool pipeline(const std::vector<std::string>& commands, std::vector<std::string>& replied) const;
+
     // Raw command interface
     // https://redis.io/commands/
     // Thera are so many commands...

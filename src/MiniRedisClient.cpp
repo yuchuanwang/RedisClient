@@ -211,6 +211,11 @@ bool MiniRedisClient::HandleArrayReply(redisReply* reply, std::vector<std::strin
 
 redisReply* MiniRedisClient::execute(const std::string& command, ...) const
 {
+    if (!context)
+    {
+        return nullptr;
+    }
+
     va_list args;
     va_start(args, command); 
     redisReply* reply = (redisReply*)redisvCommand(context, command.c_str(), args);
@@ -222,6 +227,11 @@ redisReply* MiniRedisClient::execute(const std::string& command, ...) const
 redisReply* MiniRedisClient::execute(const std::string& command,
     const std::vector<std::string>& args) const
 {
+    if (!context)
+    {
+        return nullptr;
+    }
+
     // Number of arguments, including command name
     int argc = args.size() + 1; 
     const char **argv = (const char**)malloc(sizeof(const char**) * argc);
@@ -633,4 +643,54 @@ bool MiniRedisClient::srem(const std::string& key, const std::string& member,
         key.c_str(), key.size(), 
         member.c_str(), member.size());
     return HandleIntegerReply(reply, replied);
+}
+
+bool MiniRedisClient::pipeline(const std::vector<std::string>& commands, 
+    std::vector<std::string>& replied) const
+{
+    replied.clear();
+
+    if (!context || commands.empty())
+    {
+        return false;
+    }
+
+    // Build the batch pipeline
+    for (auto& x : commands)
+    {
+        redisAppendCommand(context, x.c_str());
+    }
+
+    // Get response for each command
+    for (std::size_t i = 0; i < commands.size(); i++)
+    {
+        std::string ans = "";
+        redisReply* reply = nullptr;
+        int ret = redisGetReply(context, (void**)&reply);
+        if ((ret != REDIS_OK) || !reply)
+        {
+            freeReplyObject(reply);
+            replied.push_back(ans);
+            continue;
+        }
+
+        if ((reply->type == REDIS_REPLY_STATUS) || (reply->type == REDIS_REPLY_STRING))
+        {
+            ans = std::string(reply->str, reply->len);
+        }
+        else if (reply->type == REDIS_REPLY_INTEGER)
+        {
+            ans = std::to_string(reply->integer);
+        }
+        else
+        {
+            // TODO: Handle array replies
+            std::cout << "Unsupported reply type: " << reply->type << std::endl;
+        }
+
+        freeReplyObject(reply);
+        replied.push_back(ans);
+    }
+
+    return true;
 }

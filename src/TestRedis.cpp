@@ -1,28 +1,30 @@
 #include <iostream>
+#include <thread>
+#include <chrono>
 #include "MiniRedisClient.h"
 #include "MiniRedisPubSub.h"
 
 void TestClient()
 {
-    std::string ans;
+    std::string repliedStr;
     MiniRedisClient client;
     client.Connect("127.0.0.1", 6379);
-    client.client_setname("MiniCppClient", ans);
-    client.client_getname(ans); 
-    std::cout << ans << std::endl;
+    client.client_setname("MiniCppClient", repliedStr);
+    client.client_getname(repliedStr); 
+    std::cout << repliedStr << std::endl;
 
     std::cout << client.ping() << std::endl;
     std::cout << client.ping("Hello Redis") << std::endl;
 
-    std::cout << client.auth("password123", ans) << std::endl; 
-    std::cout << client.select(1, ans) << std::endl; 
-    std::cout << client.select(0, ans) << std::endl; 
+    std::cout << client.auth("password123", repliedStr) << std::endl; 
+    std::cout << client.select(1, repliedStr) << std::endl; 
+    std::cout << client.select(0, repliedStr) << std::endl; 
 
-    client.set("key 1", "value 1", 3600, ans);
-    client.set("key 2", "value 2", 0, ans);
+    client.set("key 1", "value 1", 3600, repliedStr);
+    client.set("key 2", "value 2", 0, repliedStr);
 
-    client.set("key 3", 1234, 3600, ans);
-    client.set("key 4", 1001, 0, ans);
+    client.set("key 3", 1234, 3600, repliedStr);
+    client.set("key 4", 1001, 0, repliedStr);
 
     long long int repliedInt = 0;
     client.expire("key 1", 360, repliedInt); 
@@ -41,7 +43,7 @@ void TestClient()
     client.strlen("invalid", repliedInt);
     client.del("invalid", repliedInt);
 
-    client.get("key 1", ans);
+    client.get("key 1", repliedStr);
 
     client.exists("key 1", repliedInt);
     client.exists("invalid", repliedInt);
@@ -55,7 +57,6 @@ void TestClient()
     keyDel = "key 5";
     client.del(keyDel, repliedInt);
 
-    std::string repliedStr;
     client.hset("domains", "example", "example.com", repliedInt); 
     client.hset("domains", "abc", "abc.com", repliedInt); 
     client.hget("domains", "example", repliedStr);
@@ -125,6 +126,32 @@ void TestClient()
     keysDel.push_back("Blank space");
     client.del(keysDel, repliedInt);
 
+    // Test pipeline
+    client.set("pipeline", 168, 0, repliedStr);
+    std::vector<std::string> commands;
+    for (int i = 0; i < 1000; i++)
+    {
+        std::string cmd = "INCR pipeline";
+        commands.push_back(cmd);
+    }
+    client.pipeline(commands, repliedArray);
+
+    commands.clear();
+    for (int i = 0; i < 1000; i++)
+    {
+        std::string cmd = "PING";
+        commands.push_back(cmd);
+    }
+    client.pipeline(commands, repliedArray);
+
+    commands.clear();
+    for (int i = 0; i < 1000; i++)
+    {
+        std::string cmd = "PING Redis";
+        commands.push_back(cmd);
+    }
+    client.pipeline(commands, repliedArray);
+
     std::cout << repliedInt << std::endl; 
 }
 
@@ -145,7 +172,7 @@ void TestSub()
     int i = 0;
     while (i < interval)
     {
-        sleep(1);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
         i++; 
     }
     
@@ -163,7 +190,7 @@ void TestPub()
     while (i < interval)
     {
         pub.Publish("channelFromCpp", content); 
-        sleep(1);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
         i++; 
     }
 
@@ -174,5 +201,5 @@ int main()
 {
     TestClient();
     //TestPub();
-    TestSub();
+    //TestSub();
 }

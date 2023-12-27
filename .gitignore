@@ -1,0 +1,4 @@
+# Ignore folders
+/output
+*.d
+*.o
